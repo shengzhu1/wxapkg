@@ -1,12 +1,13 @@
-package util
+package wechat
 
 import (
 	"bytes"
+	"regexp"
+	"strings"
+
 	"github.com/ditashi/jsbeautifier-go/jsbeautifier"
 	"github.com/tidwall/pretty"
 	"github.com/yosssi/gohtml"
-	"regexp"
-	"strings"
 )
 
 var regScriptInHtml = regexp.MustCompile(`(?s) *<script.*?>(.*?)</script>`)
