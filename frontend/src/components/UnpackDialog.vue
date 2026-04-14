@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
 import { reactive, ref, watch } from "vue";
-import { UnpackOptions, WxapkgItem } from "../../bindings/github.com/wux1an/wxapkg/wechat";
-import InputText from "primevue/inputtext";
-import Checkbox from "primevue/checkbox";
-import ProgressBar from 'primevue/progressbar';
-import { AppService } from "../../bindings/github.com/wux1an/wxapkg";
+import * as AppService from '../../wailsjs/go/main/AppService';
 import { UnpackStatusType } from "../entries/util";
+import {wechat} from "../../wailsjs/go/models";
+import UnpackOptions = wechat.UnpackOptions;
+import WxapkgItem = wechat.WxapkgItem;
 
 type DialogStage = 'config' | 'progress' | 'complete' | 'error';
 
@@ -31,10 +30,6 @@ const decryptKey = ref('');
 const currentStage = ref<DialogStage>('config');
 const currentProgress = ref<WxapkgItem | null>(null);
 const actualOutputDir = ref('');
-
-function formatPath(path: string): string {
-  return path.replace(/\//g, '/\u200B');
-}
 
 watch(() => [options.OutputDir, item.value?.Location], async () => {
   if (options.OutputDir && item.value) {
@@ -120,7 +115,7 @@ function minimizeDialog() {
     v-model:visible="visible"
     modal
     header="解包配置"
-    :style="{ width: '400px' }"
+    :style="{ width: '500px' }"
     :autofocus="false"
     @after-hide="emit('afterHide')"
   >
@@ -182,7 +177,7 @@ function minimizeDialog() {
         ></i>
       </div>
       <p class="form-hint path-hint" v-if="options.OutputDir">
-        将输出到：<span class="path-break" v-html="formatPath(actualOutputDir)"></span>
+        文件将保存到：<br><span class="path-break">{{ actualOutputDir }}</span>
       </p>
     </div>
 
@@ -204,7 +199,7 @@ function minimizeDialog() {
     v-model:visible="visible"
     modal
     header="解包进行中"
-    :style="{ width: '400px' }"
+    :style="{ width: '500px' }"
     :closable="false"
     :autofocus="false"
   >
@@ -237,7 +232,7 @@ function minimizeDialog() {
     v-model:visible="visible"
     modal
     header="解包完成"
-    :style="{ width: '400px' }"
+    :style="{ width: '500px' }"
     :autofocus="false"
   >
     <div class="result-center">
@@ -270,7 +265,7 @@ function minimizeDialog() {
     v-model:visible="visible"
     modal
     header="解包失败"
-    :style="{ width: '400px' }"
+    :style="{ width: '500px' }"
     :autofocus="false"
   >
     <div class="result-center">
@@ -325,7 +320,7 @@ function minimizeDialog() {
 }
 
 .mono {
-  font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
 }
 
 .mt-3 {
@@ -420,8 +415,7 @@ function minimizeDialog() {
 .result-path-value {
   font-size: 13px;
   color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 </style>

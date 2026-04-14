@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { ScanPathItem } from "../entries/entries";
-import { FileFilter } from "../../bindings/github.com/wailsapp/wails/v3/pkg/application";
-import { AppService } from "../../bindings/github.com/wux1an/wxapkg";
+import * as AppService from '../../wailsjs/go/main/AppService';
+import type { PathScanResult } from '../../wailsjs/go/main/AppService';
+
+interface FileFilter {
+  DisplayName: string;
+  Pattern: string;
+}
 
 const emit = defineEmits<{
   confirm: [path: ScanPathItem];
@@ -11,9 +16,10 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false });
 const loading = ref(false);
-const selectedPath = ref<ScanPathItem | null>(null);
 const defaultPaths = ref<ScanPathItem[]>([]);
 const activeTab = ref<'auto' | 'manual'>('auto');
+const scanResult = ref<PathScanResult | null>(null);
+const logsExpanded = ref(false);
 
 function selectWxapkgFile() {
   AppService.OpenFileDialog("选择微信小程序文件(.wxapkg)", "", [
@@ -56,9 +62,12 @@ function selectDefaultPath(path: ScanPathItem) {
 function loadDefaultPaths() {
   loading.value = true;
   activeTab.value = 'auto';
+  scanResult.value = null;
+  logsExpanded.value = false;
   AppService.GetDefaultPaths()
-    .then(value => {
-      defaultPaths.value = value.map(item => new ScanPathItem(item, true));
+    .then(result => {
+      scanResult.value = result;
+      defaultPaths.value = (result.Paths ?? []).map(p => new ScanPathItem(p, true));
     })
     .finally(() => {
       loading.value = false;
@@ -78,7 +87,7 @@ watch(visible, (newValue) => {
     v-model:visible="visible"
     modal
     header="扫描微信小程序"
-    :style="{ width: '580px', minHeight: '450px' }"
+    :style="{ width: '600px', minHeight: '500px' }"
     :closable="true"
     :autofocus="false"
   >
@@ -109,7 +118,16 @@ watch(visible, (newValue) => {
         <p class="state-text">正在检测微信小程序安装目录...</p>
       </div>
 
-      <div v-else-if="defaultPaths.length === 0" class="state-center">
+      <!-- 有日志时在顶部显示（不论是否找到路径） -->
+      <div class="log-box" v-if="!loading && scanResult?.Logs?.trim()">
+        <button class="log-toggle" @click="logsExpanded = !logsExpanded">
+          <i class="pi" :class="logsExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+          {{ logsExpanded ? '收起' : '展开' }}检测日志
+        </button>
+        <pre v-if="logsExpanded" class="log-content">{{ scanResult.Logs }}</pre>
+      </div>
+
+      <div v-if="!loading && defaultPaths.length === 0 && !logsExpanded" class="state-center">
         <div class="state-icon warning">
           <i class="pi pi-exclamation-triangle"></i>
         </div>
@@ -117,24 +135,20 @@ watch(visible, (newValue) => {
         <p class="state-text">请使用手动指定模式</p>
       </div>
 
-      <div v-else>
-        <p class="section-label">检测到的小程序安装目录</p>
-        <div class="path-list">
-          <div
-            v-for="path in defaultPaths"
-            :key="path.path"
-            class="path-card"
-            @click="selectDefaultPath(path)"
-          >
-            <div class="path-card-icon">
-              <i class="pi pi-folder"></i>
-            </div>
-            <div class="path-card-body">
-              <div class="path-card-path">{{ path.path }}</div>
-              <div class="path-card-hint">点击开始扫描</div>
-            </div>
-            <i class="pi pi-chevron-right path-card-arrow"></i>
+      <div v-if="!loading && defaultPaths.length > 0" class="path-list">
+        <div
+          v-for="path in defaultPaths"
+          :key="path.path"
+          class="path-card"
+          @click="selectDefaultPath(path)"
+        >
+          <div class="path-card-icon">
+            <i class="pi pi-folder"></i>
           </div>
+          <div class="path-card-body">
+            <div class="path-card-path">{{ path.path }}</div>
+          </div>
+          <i class="pi pi-chevron-right path-card-arrow"></i>
         </div>
       </div>
     </div>
@@ -179,7 +193,7 @@ watch(visible, (newValue) => {
           密钥即小程序 ID，格式：<code>wx</code> + 16位字符，示例：<code>wxabcdef1234567890</code>
         </div>
         <div style="margin-top: 8px; color: var(--color-text-tertiary);">
-          选择“小程序安装目录”会自动识别小程序 ID 作为密钥，其他模式需要在解包时手动输入
+          选择"小程序安装目录"会自动识别小程序 ID 作为密钥，其他模式需要在解包时手动输入
         </div>
       </div>
     </div>
@@ -227,5 +241,50 @@ watch(visible, (newValue) => {
   gap: 10px;
   max-height: 280px;
   overflow-y: auto;
+}
+
+/* 日志区域 */
+.log-box {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background: var(--color-light-gray);
+  border-radius: var(--radius-standard);
+  overflow: hidden;
+}
+
+.log-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.log-toggle:hover {
+  color: var(--color-apple-blue);
+}
+.log-toggle i {
+  font-size: 11px;
+}
+
+.log-content {
+  padding: 10px 12px 14px;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin: 0;
 }
 </style>

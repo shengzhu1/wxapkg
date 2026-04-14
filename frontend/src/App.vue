@@ -6,10 +6,11 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { formatSize, formatTime, UnpackStatusType, useAppToast } from "./entries/util";
 import Toast from 'primevue/toast';
-import { AppService } from "../bindings/github.com/wux1an/wxapkg/index"
-import { UnpackOptions, WxapkgItem } from "../bindings/github.com/wux1an/wxapkg/wechat"
-import { Events } from '@wailsio/runtime'
 import UnpackDialog from "./components/UnpackDialog.vue";
+import {wechat} from "../wailsjs/go/models";
+import WxapkgItem = wechat.WxapkgItem;
+import UnpackOptions = wechat.UnpackOptions;
+import * as AppService from '../wailsjs/go/main/AppService';
 
 const scanDialogVisible = ref(false)
 const unpackDialogVisible = ref(false)
@@ -85,7 +86,15 @@ function clearAll() {
   toast.info('清空', '已清空所有小程序')
 }
 
-const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>()
+function getStatusIcon(status: string): string {
+  const map: Record<string, string> = {
+    [UnpackStatusType.Running]:  'pi pi-spin pi-spinner',
+    [UnpackStatusType.Finished]: 'pi pi-folder-open',
+    [UnpackStatusType.Error]:    'pi pi-times',
+  }
+  return map[status] ?? 'pi pi-box'
+}
+
 const notifiedUuids = new Set<string>()
 
 function processProgress(uuid: string) {
@@ -104,7 +113,6 @@ function processProgress(uuid: string) {
 
     const updatedItem: WxapkgItem = { ...currentItem, ...data }
     wxapkgItems.value = wxapkgItems.value.map((item, i) => i === index ? updatedItem : item)
-    tableKey.value = `table-${Date.now()}-${data.UnpackStatus}`
 
     if (unpackDialogVisible.value && selectedWxapkgItem.value?.UUID === uuid) {
       selectedWxapkgItem.value = updatedItem
@@ -123,24 +131,15 @@ function processProgress(uuid: string) {
 }
 
 onMounted(() => {
-  Events.On(EventUnpackProgress, callback => {
-    const uuid = callback.data as string
-    const existing = pendingTimers.get(uuid)
-    if (existing) clearTimeout(existing)
-    const timer = setTimeout(() => {
-      pendingTimers.delete(uuid)
-      processProgress(uuid)
-    }, 100)
-    pendingTimers.set(uuid, timer)
+  window.runtime.EventsOn(EventUnpackProgress, (uuid: string) => {
+    processProgress(uuid)
   })
   AppService.Version().then(v => version.value = v)
   AppService.Github().then(v => github.value = v)
 })
 
 onBeforeUnmount(() => {
-  Events.Off(EventUnpackProgress)
-  for (const t of pendingTimers.values()) clearTimeout(t)
-  pendingTimers.clear()
+  window.runtime.EventsOff(EventUnpackProgress)
 })
 </script>
 
@@ -233,36 +232,25 @@ onBeforeUnmount(() => {
         <Column header="解包" style="width: 72px" headerClass="col-center" bodyClass="col-center">
           <template #body="{ data }">
             <button
-              v-if="data.UnpackStatus === UnpackStatusType.Running"
-              class="status-dot running"
-              v-tooltip.top="`解包中 ${Math.round(data.UnpackProgress)}%`"
-              disabled
+              :class="[
+                'status-dot',
+                {
+                  'running':    data.UnpackStatus === UnpackStatusType.Running,
+                  'finished':  data.UnpackStatus === UnpackStatusType.Finished,
+                  'error':     data.UnpackStatus === UnpackStatusType.Error,
+                  'idle':      data.UnpackStatus === UnpackStatusType.Idle || !data.UnpackStatus,
+                }
+              ]"
+              v-tooltip.top="
+                data.UnpackStatus === UnpackStatusType.Running  ? `解包中 ${Math.round(data.UnpackProgress)}%` :
+                data.UnpackStatus === UnpackStatusType.Finished ? '打开目录' :
+                data.UnpackStatus === UnpackStatusType.Error    ? (data.UnpackErrorMessage || '解包失败') :
+                '解包'"
+              :disabled="data.UnpackStatus === UnpackStatusType.Running || data.UnpackStatus === UnpackStatusType.Error"
+              @click="data.UnpackStatus === UnpackStatusType.Finished ? openFolder(data.UnpackSavePath) :
+                      data.UnpackStatus === UnpackStatusType.Idle || !data.UnpackStatus ? unpack(data) : undefined"
             >
-              <i class="pi pi-spin pi-spinner"></i>
-            </button>
-            <button
-              v-else-if="data.UnpackStatus === UnpackStatusType.Finished"
-              class="status-dot finished"
-              v-tooltip.top="'打开目录'"
-              @click="openFolder(data.UnpackSavePath)"
-            >
-              <i class="pi pi-folder-open"></i>
-            </button>
-            <button
-              v-else-if="data.UnpackStatus === UnpackStatusType.Error"
-              class="status-dot error"
-              v-tooltip.top="data.UnpackErrorMessage || '解包失败'"
-              disabled
-            >
-              <i class="pi pi-times"></i>
-            </button>
-            <button
-              v-else
-              class="status-dot idle"
-              v-tooltip.top="'解包'"
-              @click="unpack(data)"
-            >
-              <i class="pi pi-box"></i>
+              <i :class="getStatusIcon(data.UnpackStatus)"></i>
             </button>
           </template>
         </Column>
@@ -421,7 +409,7 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   direction: rtl;
   text-align: left;
-  font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
   font-size: 13px;
   cursor: default;
 }

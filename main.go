@@ -4,7 +4,9 @@ import (
 	"embed"
 	"log"
 
-	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
 //go:embed all:frontend/dist
@@ -14,37 +16,21 @@ var version = "v2.0.0"
 var github = "https://github.com/wux1an/wxapkg"
 
 func main() {
-	application.RegisterEvent[string](EventUnpackProgress)
+	app := NewAppService()
 
-	var service = NewAppService()
-	app := application.New(application.Options{
-		Name: "微信小程序解包工具",
-		Services: []application.Service{
-			application.NewService(service),
-		},
-		Assets: application.AssetOptions{
-			Handler: application.AssetFileServerFS(assets),
-		},
-		Mac: application.MacOptions{
-			ApplicationShouldTerminateAfterLastWindowClosed: true,
-		},
-	})
-	service.SetContext(app)
-
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "微信小程序解包工具",
-		Mac: application.MacWindow{
-			InvisibleTitleBarHeight: 50,
-			Backdrop:                application.MacBackdropTranslucent,
-			TitleBar:                application.MacTitleBarHiddenInset,
-		},
+	err := wails.Run(&options.App{
+		Title:  "微信小程序解包工具",
 		Width:  1024,
 		Height: 768,
-		//BackgroundColour: application.NewRGB(27, 38, 54),
-		URL: "/",
+		AssetServer: &assetserver.Options{
+			Assets: assets,
+		},
+		OnStartup: app.startup,
+		Bind: []interface{}{
+			app,
+		},
 	})
-
-	if err := app.Run(); err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 }

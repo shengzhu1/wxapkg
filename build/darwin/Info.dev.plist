@@ -2,27 +2,27 @@
 <plist version="1.0">
     <dict>
         <key>CFBundlePackageType</key>
-            <string>APPL</string>
+        <string>APPL</string>
         <key>CFBundleName</key>
-            <string>WeChat MiniProgram Unpacker</string>
+        <string>{{.Info.ProductName}}</string>
         <key>CFBundleExecutable</key>
-            <string>wxapkg.exe</string>
+        <string>{{.OutputFilename}}</string>
         <key>CFBundleIdentifier</key>
-            <string>com.wux1an.wxunpacker</string>
+        <string>com.wux1an.wxapkg</string>
         <key>CFBundleVersion</key>
-            <string>2.1.0</string>
+        <string>{{.Info.ProductVersion}}</string>
         <key>CFBundleGetInfoString</key>
-            <string>For legal use only. Do not use for violating WeChat terms of service.</string>
+        <string>{{.Info.Comments}}</string>
         <key>CFBundleShortVersionString</key>
-            <string>2.1.0</string>
+        <string>{{.Info.ProductVersion}}</string>
         <key>CFBundleIconFile</key>
-            <string>icons</string>
+        <string>icons</string>
         <key>LSMinimumSystemVersion</key>
-            <string>10.15.0</string>
+        <string>10.13.0</string>
         <key>NSHighResolutionCapable</key>
-            <string>true</string>
+        <string>true</string>
         <key>NSHumanReadableCopyright</key>
-            <string>© 2025 wux1an. All rights reserved.</string>
+        <string>{{.Info.Copyright}}</string>
         <key>NSAppTransportSecurity</key>
         <dict>
             <key>NSAllowsLocalNetworking</key>

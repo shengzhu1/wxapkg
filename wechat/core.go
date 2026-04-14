@@ -75,19 +75,14 @@ type WxapkgFileItemStructure struct {
 	rawFilePath *string
 }
 
-// LogFunc 日志函数类型，GUI 程序可传 nil
-type LogFunc func(format string, args ...any)
-
-// getLogger 从可变参数中取出日志函数，若未提供则返回空函数
-func getLogger(logs []LogFunc) LogFunc {
-	if len(logs) > 0 && logs[0] != nil {
-		return logs[0]
-	}
-	return func(string, ...any) {}
+// PathScanResult GetDefaultPaths 的返回类型
+type PathScanResult struct {
+	Paths []string // 检测到的小程序安装目录
+	Logs  string   // 检测过程的日志详情
 }
 
 type platform interface {
-	GetDefaultPaths(log ...LogFunc) []string
+	GetDefaultPaths() PathScanResult
 }
 
 var Platform = newPlatform()

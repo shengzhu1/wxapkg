@@ -1,27 +1,27 @@
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plIST PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
         <key>CFBundlePackageType</key>
-            <string>APPL</string>
+        <string>APPL</string>
         <key>CFBundleName</key>
-            <string>wxapkg</string>
+        <string>{{.Info.ProductName}}</string>
         <key>CFBundleExecutable</key>
-            <string>wxapkg</string>
+        <string>{{.OutputFilename}}</string>
         <key>CFBundleIdentifier</key>
-            <string>com.wux1an.wxapkg</string>
+        <string>com.wux1an.wxapkg</string>
         <key>CFBundleVersion</key>
-            <string>2.0.0</string>
+        <string>{{.Info.ProductVersion}}</string>
         <key>CFBundleGetInfoString</key>
-            <string>仅供学习研究使用，请勿用于任何侵权或非法用途</string>
+        <string>{{.Info.Comments}}</string>
         <key>CFBundleShortVersionString</key>
-            <string>2.0.0</string>
+        <string>{{.Info.ProductVersion}}</string>
         <key>CFBundleIconFile</key>
-            <string>icons</string>
+        <string>icons</string>
         <key>LSMinimumSystemVersion</key>
-            <string>10.15.0</string>
+        <string>10.13.0</string>
         <key>NSHighResolutionCapable</key>
-            <string>true</string>
+        <string>true</string>
         <key>NSHumanReadableCopyright</key>
-            <string>© 2026 wux1an. All rights reserved.</string>
+        <string>{{.Info.Copyright}}</string>
     </dict>
 </plist>

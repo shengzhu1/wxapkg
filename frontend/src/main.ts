@@ -4,6 +4,8 @@ import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import ToastService from 'primevue/toastservice';
 
+import './assets/css/fonts.css';
+import './assets/css/style.css';
 import 'primeicons/primeicons.css';
 
 const app = createApp(App);
