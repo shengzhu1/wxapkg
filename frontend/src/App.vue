@@ -188,6 +188,7 @@ onBeforeUnmount(() => {
           :key="tableKey"
         >
           <colgroup>
+            <col style="width: 72px">
             <col style="width: 170px">
             <col style="width: 180px">
             <col style="width: 100px">
@@ -199,6 +200,22 @@ onBeforeUnmount(() => {
             {{ search ? `没有搜索到与 "${search}" 相关的小程序` : '没有小程序，请扫描或添加' }}
           </div>
         </template>
+
+        <Column header="图标" style="width: 72px" headerClass="col-center" bodyClass="col-center">
+          <template #body="{ data }">
+            <div class="icon-cell">
+              <img
+                v-if="data.IconDataURL"
+                class="app-icon"
+                :src="data.IconDataURL"
+                :alt="`${data.WxId} icon`"
+              />
+              <div v-else class="app-icon-placeholder">
+                <i class="pi pi-image"></i>
+              </div>
+            </div>
+          </template>
+        </Column>
 
         <Column header="小程序 ID" field="WxId" style="width: 170px">
           <template #body="{ data }">
@@ -397,6 +414,36 @@ onBeforeUnmount(() => {
   justify-content: center;
   height: 160px;
   color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
+.icon-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-icon,
+.app-icon-placeholder {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.app-icon {
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  background: #fff;
+}
+
+.app-icon-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.12), rgba(52, 199, 89, 0.12));
+  color: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   font-size: 14px;
 }
 

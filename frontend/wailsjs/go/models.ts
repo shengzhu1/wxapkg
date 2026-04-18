@@ -59,6 +59,8 @@ export namespace wechat {
 	    UUID: string;
 	    WxId: string;
 	    Location: string;
+	    IconPath: string;
+	    IconDataURL: string;
 	    EncryptKey: string;
 	    Size: number;
 	    IsDir: boolean;
@@ -81,6 +83,8 @@ export namespace wechat {
 	        this.UUID = source["UUID"];
 	        this.WxId = source["WxId"];
 	        this.Location = source["Location"];
+	        this.IconPath = source["IconPath"];
+	        this.IconDataURL = source["IconDataURL"];
 	        this.EncryptKey = source["EncryptKey"];
 	        this.Size = source["Size"];
 	        this.IsDir = source["IsDir"];

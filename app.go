@@ -28,6 +28,11 @@ func NewAppService() *AppService {
 
 func (a *AppService) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	go func() {
+		defaultPaths := wechat.Platform.GetDefaultPaths()
+		wechat.WarmIconCache(defaultPaths.Paths)
+	}()
 }
 
 // storeItem stores the item and returns a pointer to it for modification

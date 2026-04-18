@@ -37,6 +37,8 @@ type WxapkgItem struct {
 	UUID            string
 	WxId            string
 	Location        string
+	IconPath        string
+	IconDataURL     string
 	EncryptKey      string
 	Size            int64
 	IsDir           bool
